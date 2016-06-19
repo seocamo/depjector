@@ -114,7 +114,6 @@
     "no-plusplus": ["error"],
     "no-trailing-spaces": ["error"],
     "no-whitespace-before-property": ["error"],
-    "object-curly-newline": ["error"],
     "object-curly-spacing": ["error"],
     "one-var": ["error", "never"],
     "quotes": ["error", "double"],
