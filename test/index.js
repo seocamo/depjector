@@ -41,16 +41,16 @@ describe('Depjector', () => {
 
         it("should add a dependency", () => {
             const depjector = new Depjector();
-            depjector.indexDependency("test1", "./inc/SomeMod5.js").then(() => {
+            depjector.indexDependency({name: "test1", path: "./inc/SomeMod5.js"}).then(() => {
                 assert(depjector.dependencyStore.dependencies.length === 1, "it didn't load a dependency");
             });
         });
 
         it("should get a dependency", () => {
             const depjector = new Depjector();
-            depjector.indexDependency("SomeMod5", "./inc/SomeMod5.js");
+            depjector.indexDependency("../inc/SomeMod5.js");
 
-            assert(depjector.getDependency("SomeMod5", {}), "it didn't get a dependency");
+            assert(depjector.getDependency("someMod5", {}), "it didn't get a dependency");
         });
 
         it('should load OtherMod', function () {

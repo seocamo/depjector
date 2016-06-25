@@ -13,30 +13,17 @@ class Depjector {
         dependencyPath += "";
         return new Promise((resolve, reject) => {
             utils.getAllFiles(dependencyPath).then((files) => {
-                let addedCount = 0;
-                let error;
                 files.every((file) => {
                     const ext = path.extname(file);
                     if (ext === ".js") {
                         this.indexDependency(file).then(() => {
-                            addedCount += 1;
                         }).catch((e) => {
-                            if (!error) {
-                                // start with the first error...
-                                error = e;
-                            }
+                            reject(e);
                         });
-                    }
-                    if (error) {
-                        reject(error);
-                        return false;
                     }
                     return true;
                 });
-                if (error) {
-                    return reject(error);
-                }
-                return resolve(addedCount);
+                return resolve(this.dependencyStore.dependencies.length);
             }).catch((err) => {
                 reject(err);
             });
@@ -67,50 +54,41 @@ class Depjector {
     }
 
     getDependency(name, overwrites) {
-        return new Promise((resolve, reject) => {
-            try {
-                // force string.
-                name += "";
+        // force string.
+        name += "";
 
-                const dependency = this.dependencyStore.findOneByName(name);
+        const dependency = this.dependencyStore.findOneByName(name);
 
-                if (dependency) {
-                    resolve(this._injectDependency(dependency, overwrites));
-                    return;
-                }
-                resolve(undefined);
-            } catch (e) {
-                reject(e);
-            }
-        });
+        if (dependency) {
+            return this._injectDependency(dependency, overwrites);
+        }
+        return;
     }
 
     executeService(serviceName) {
-        return new Promise((resolve, reject) => {
-            if (!serviceName || serviceName.indexOf(":") === -1) {
-                reject(new Error("Format error."));
-            }
+        if (!serviceName || serviceName.indexOf(":") === -1) {
+            throw new Error("Format error.");
+        }
 
-            const serviceDependencies = this.dependencyStore.findAllByServiceName(serviceName);
+        const serviceDependencies = this.dependencyStore.findAllByServiceName(serviceName);
 
-            if (serviceDependencies.length > 0) {
-                const results = [];
-                const methodName = serviceName.substr(serviceName.indexOf(":") + 1);
-                serviceDependencies.forEach((dependency) => {
-                    const instance = this._injectDependency(dependency);
+        if (serviceDependencies.length > 0) {
+            const results = [];
+            const methodName = serviceName.substr(serviceName.indexOf(":") + 1);
+            serviceDependencies.forEach((dependency) => {
+                const instance = this._injectDependency(dependency);
 
-                    if (instance && instance[methodName]) {
-                        const funcArgs = Array.prototype.slice.call(arguments, 1);
-                        const result = instance[methodName].apply(instance, funcArgs);
-                        if (result !== undefined) {
-                            results.push(result);
-                        }
+                if (instance && instance[methodName]) {
+                    const funcArgs = Array.prototype.slice.call(arguments, 1);
+                    const result = instance[methodName].apply(instance, funcArgs);
+                    if (result !== undefined) {
+                        results.push(result);
                     }
-                });
-                resolve(results);
-            }
-            reject(new Error("no services was found"));
-        });
+                }
+            });
+            return results;
+        }
+        throw new Error("no services was found");
     }
 
 
@@ -135,12 +113,7 @@ class Depjector {
                 if (overwrites[arg]) {
                     params.push(overwrites[arg]);
                 } else {
-                    this.getDependency(arg).then((dep) => {
-                        params.push(dep);
-
-                    }).catch((e) => {
-                        throw e;
-                    });
+                    params.push(this.getDependency(arg));
                 }
             });
         }
