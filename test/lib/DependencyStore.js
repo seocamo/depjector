@@ -1,6 +1,7 @@
 "use strict";
 const assert = require('assert');
 const DependencyStore = require('../../lib/DependencyStore');
+const path = require("path");
 
 class testClass {
     constructor() {
@@ -17,20 +18,20 @@ describe('dependencyStore', () => {
 
         it('should add a test object to the store', () => {
             const dependencyStore = new DependencyStore();
-            dependencyStore.add({name: "test"});
-            assert(dependencyStore.dependencies[0].name === "test", "it did't added the test object");
+            dependencyStore.add(path.resolve(__dirname, "./../../inc/arrow.js"));
+            assert(dependencyStore.dependencies[0].name === "arrow", "it did't added the test object");
         });
 
         it('should find one object', () => {
             const dependencyStore = new DependencyStore();
-            dependencyStore.add({name: "test"});
-            assert(dependencyStore.findOneByName("test").name === "test", "it did't added the test object");
+            dependencyStore.add(path.resolve(__dirname, "./../../inc/arrow.js"));
+            assert(dependencyStore.findOneByName("arrow").name === "arrow", "it did't added the test object");
         });
 
         it('should find all by a service name', () => {
             const dependencyStore = new DependencyStore();
-            dependencyStore.add({name: "test", service: ["some:test"]});
-            assert(dependencyStore.findAllByServiceName("some:test")[0].name === "test", "it did't added the test object");
+            dependencyStore.add(path.resolve(__dirname, "./../../inc/func3.js"));
+            assert(dependencyStore.findAllByServiceName("routes:public")[0].name === "func3", "it did't added the test object");
         });
     });
 });

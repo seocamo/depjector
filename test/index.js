@@ -25,8 +25,9 @@ describe('Depjector', () => {
             depjector.indexDependencies([
                 {name: "test1", path: "./inc/OtherMod.js"},
                 {name: "test2", path: "./inc/OtherMod1.js"}
-            ]);
-            assert(depjector.dependencyStore.dependencies.length === 2, "it didn't load 2 dependencies");
+            ]).then(() => {
+                assert(depjector.dependencyStore.dependencies.length === 2, "it didn't load 2 dependencies");
+            });
         });
 
         it("should throw a error if get any thing else then a array", () => {
@@ -40,9 +41,9 @@ describe('Depjector', () => {
 
         it("should add a dependency", () => {
             const depjector = new Depjector();
-            depjector.indexDependency("test1", "./inc/SomeMod5.js");
-
-            assert(depjector.dependencyStore.dependencies.length === 1, "it didn't load a dependency");
+            depjector.indexDependency("test1", "./inc/SomeMod5.js").then(() => {
+                assert(depjector.dependencyStore.dependencies.length === 1, "it didn't load a dependency");
+            });
         });
 
         it("should get a dependency", () => {

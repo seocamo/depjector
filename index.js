@@ -2,7 +2,6 @@
 const path = require("path");
 const utils = require("./lib/utils");
 const DependencyStore = require("./lib/DependencyStore");
-const Parser = require("./lib/Parser");
 
 class Depjector {
 
@@ -15,15 +14,29 @@ class Depjector {
         return new Promise((resolve, reject) => {
             utils.getAllFiles(dependencyPath).then((files) => {
                 let addedCount = 0;
-                files.forEach((file) => {
+                let error;
+                files.every((file) => {
                     const ext = path.extname(file);
                     if (ext === ".js") {
-                        this.indexDependency(path.basename(file, path.extname(file)), file);
-                        addedCount += 1;
+                        this.indexDependency(file).then(() => {
+                            addedCount += 1;
+                        }).catch((e) => {
+                            if (!error) {
+                                // start with the first error...
+                                error = e;
+                            }
+                        });
                     }
+                    if (error) {
+                        reject(error);
+                        return false;
+                    }
+                    return true;
                 });
-
-                resolve(addedCount);
+                if (error) {
+                    return reject(error);
+                }
+                return resolve(addedCount);
             }).catch((err) => {
                 reject(err);
             });
@@ -31,115 +44,116 @@ class Depjector {
     }
 
     indexDependencies(dependencyArray) {
-        if (!utils.isArray(dependencyArray)) {
-            throw new TypeError("dependencyArray isn't a array");
-        }
-        dependencyArray.forEach((dependency) => {
-            this.indexDependency(dependency.name, dependency.path);
+        return new Promise((resolve, reject) => {
+            if (!utils.isArray(dependencyArray)) {
+                reject(new TypeError("dependencyArray isn't a array"));
+            }
+            dependencyArray.forEach((dependency) => {
+                this.indexDependency(dependency);
+            });
+            resolve();
         });
     }
 
-    indexDependency(name, path) {
-        // force string.
-        name += "";
-        name = (name + "").charAt(0).toLowerCase() + name.slice(1);
-        path = path + "";
-        const dep = require(path);
-        let service = {};
-        let args = undefined;
-        let isFinally = false;
-
-        if (dep.__dependency) {
-            if (dep.__dependency.name) {
-                name = dep.__dependency.name + "";
+    indexDependency(dependency) {
+        return new Promise((resolve, reject) => {
+            try {
+                this.dependencyStore.add(dependency);
+            } catch (e) {
+                return reject(e);
             }
-            if (dep.__dependency.service && utils.isArray(dep.__dependency.service)) {
-                service = dep.__dependency.service;
-            }
-            if (dep.__dependency.args) {
-                args = dep.__dependency.args;
-            }
-            if (dep.__dependency.finally === true) {
-                isFinally = true;
-            }
-
-        }
-
-        this.dependencyStore.add({name, path, args, service, finally: isFinally, dep});
+            return resolve();
+        });
     }
 
     getDependency(name, overwrites) {
-        // force string.
-        name += "";
+        return new Promise((resolve, reject) => {
+            try {
+                // force string.
+                name += "";
 
-        const dependency = this.dependencyStore.findOneByName(name);
+                const dependency = this.dependencyStore.findOneByName(name);
 
-        if (dependency) {
-            return this._injectDependency(dependency, overwrites);
-        }
-        return undefined;
+                if (dependency) {
+                    resolve(this._injectDependency(dependency, overwrites));
+                    return;
+                }
+                resolve(undefined);
+            } catch (e) {
+                reject(e);
+            }
+        });
     }
 
     executeService(serviceName) {
-        if (!serviceName || serviceName.indexOf(":") === -1) {
-            throw new Error("Format error.");
-        }
+        return new Promise((resolve, reject) => {
+            if (!serviceName || serviceName.indexOf(":") === -1) {
+                reject(new Error("Format error."));
+            }
 
-        const serviceDependencies = this.dependencyStore.findAllByServiceName(serviceName);
+            const serviceDependencies = this.dependencyStore.findAllByServiceName(serviceName);
 
-        if (serviceDependencies.length > 0) {
-            const results = [];
-            serviceDependencies.forEach((dependency) => {
-
-                const instance = this._injectDependency(dependency);
+            if (serviceDependencies.length > 0) {
+                const results = [];
                 const methodName = serviceName.substr(serviceName.indexOf(":") + 1);
+                serviceDependencies.forEach((dependency) => {
+                    const instance = this._injectDependency(dependency);
 
-                if (instance && instance[methodName]) {
-                    const funcArgs = Array.prototype.slice.call(arguments, 1);
-                    const result = instance[methodName].apply(instance, funcArgs);
-                    if (result !== undefined) {
-                        results.push(result);
+                    if (instance && instance[methodName]) {
+                        const funcArgs = Array.prototype.slice.call(arguments, 1);
+                        const result = instance[methodName].apply(instance, funcArgs);
+                        if (result !== undefined) {
+                            results.push(result);
+                        }
                     }
-                }
-            });
-            return results;
-        }
-        throw new Error("no services was found");
+                });
+                resolve(results);
+            }
+            reject(new Error("no services was found"));
+        });
     }
 
 
+    /**
+     * _injectDependency
+     * @param {Dependency} dependency
+     * @param {Object} overwrites
+     * @returns {Object}
+     */
     _injectDependency(dependency, overwrites) {
         // if the user don't want DI on a module jump over.
         if (dependency.finally) {
-            return dependency.dep;
+            return dependency.dependency;
         }
-        // parser the dependency getting the args for detect its dependencies.
-        const parser = new Parser(dependency.dep);
 
-        const args = dependency.args || parser.args;
         overwrites = overwrites || {};
 
         // make a parameter list with the dependencies.
         const params = [];
-        if (args.length > 0) {
-            args.forEach((arg) => {
+        if (dependency.args.length > 0) {
+            dependency.args.forEach((arg) => {
                 if (overwrites[arg]) {
                     params.push(overwrites[arg]);
                 } else {
-                    params.push(this.getDependency(arg));
+                    this.getDependency(arg).then((dep) => {
+                        params.push(dep);
+
+                    }).catch((e) => {
+                        throw e;
+                    });
                 }
             });
         }
 
-        if (parser.isClass) {
+        if (dependency.isClass) {
             // make new object of the Class with the parameters
-            return new (Function.prototype.bind.apply(parser.dependency, [].concat([null], params)));
-        } else if (parser.isFunction || parser.isArrow) {
+            return new (Function.prototype.bind.apply(dependency.dependency, [].concat([null], params)));
+        } else if (dependency.isFunction || dependency.isArrow) {
             // call the function with the parameters
-            return parser.dependency.apply(undefined, params);
+            return dependency.dependency.apply(undefined, params);
         }
         // if this is a object or simple type like string or number then return.
-        return parser.dependency;
+        return dependency.dependency;
     }
 }
 
