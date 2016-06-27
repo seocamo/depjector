@@ -1,17 +1,29 @@
 "use strict";
 const path = require("path");
+const fs = require("fs");
 const utils = require("./lib/utils");
 const DependencyStore = require("./lib/DependencyStore");
+
+const snakeToCamel = (string) => {
+    const now = Date.now();
+    const out = string.replace(/(\-\w)/g, (m) => {
+        return m[1].toUpperCase();
+    });
+    console.log(" ", (Date.now() - now), " ");
+    return out;
+};
 
 class Depjector {
 
     constructor() {
         this.dependencyStore = new DependencyStore();
+        this.indexDependency({name: "depjector", dependency: this, final: true});
     }
 
     indexPath(dependencyPath) {
         dependencyPath += "";
         return new Promise((resolve, reject) => {
+            const before = this.dependencyStore.dependencies.length;
             utils.getAllFiles(dependencyPath).then((files) => {
                 files.every((file) => {
                     const ext = path.extname(file);
@@ -23,11 +35,38 @@ class Depjector {
                     }
                     return true;
                 });
-                return resolve(this.dependencyStore.dependencies.length);
+                return resolve(this.dependencyStore.dependencies.length - before);
             }).catch((err) => {
                 reject(err);
             });
         });
+    }
+
+    addNodeModules(filter) {
+        filter = filter || [];
+        return new Promise((resolve, reject) => {
+            fs.readdir("./node_modules", (err, files) => {
+                if (err) {
+                    reject(err);
+                }
+                let count = 0;
+                for (const file of files) {
+                    if (file[0] !== "." && filter.indexOf(file) === -1) {
+                        this.indexDependency({name: snakeToCamel(file), path: file, final: true});
+                        count += 1;
+                    }
+                }
+                resolve(count);
+            });
+        });
+    }
+
+    addModules(nameArray) {
+        const args = [];
+        for (const name of nameArray) {
+            args.push({name: snakeToCamel(name), path: name, final: true});
+        }
+        return this.indexDependencies(args);
     }
 
     indexDependencies(dependencyArray) {
@@ -35,9 +74,9 @@ class Depjector {
             if (!utils.isArray(dependencyArray)) {
                 reject(new TypeError("dependencyArray isn't a array"));
             }
-            dependencyArray.forEach((dependency) => {
+            for (const dependency of dependencyArray) {
                 this.indexDependency(dependency);
-            });
+            }
             resolve();
         });
     }
@@ -53,6 +92,10 @@ class Depjector {
         });
     }
 
+    setDependency(name, dependency) {
+        this.dependencyStore.set(name, dependency);
+    }
+
     getDependency(name, overwrites) {
         // force string.
         name += "";
@@ -62,7 +105,7 @@ class Depjector {
         if (dependency) {
             return this._injectDependency(dependency, overwrites);
         }
-        return;
+        return undefined;
     }
 
     executeService(serviceName) {
@@ -75,17 +118,14 @@ class Depjector {
         if (serviceDependencies.length > 0) {
             const results = [];
             const methodName = serviceName.substr(serviceName.indexOf(":") + 1);
-            serviceDependencies.forEach((dependency) => {
+            for (const dependency of serviceDependencies) {
                 const instance = this._injectDependency(dependency);
 
                 if (instance && instance[methodName]) {
                     const funcArgs = Array.prototype.slice.call(arguments, 1);
-                    const result = instance[methodName].apply(instance, funcArgs);
-                    if (result !== undefined) {
-                        results.push(result);
-                    }
+                    results.push(instance[methodName].apply(instance, funcArgs));
                 }
-            });
+            }
             return results;
         }
         throw new Error("no services was found");
@@ -109,13 +149,13 @@ class Depjector {
         // make a parameter list with the dependencies.
         const params = [];
         if (dependency.args.length > 0) {
-            dependency.args.forEach((arg) => {
+            for (const arg of dependency.args) {
                 if (overwrites[arg]) {
                     params.push(overwrites[arg]);
                 } else {
                     params.push(this.getDependency(arg));
                 }
-            });
+            }
         }
 
         if (dependency.isClass) {

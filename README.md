@@ -1,5 +1,4 @@
-depjector
-=========
+#depjector
 
 this is a dependency injector for node 4.x <
 
@@ -9,7 +8,9 @@ use npm for the installation, simple do
 npm install depjector --save
 ```
 
-#Dependencies and services
+*Is still testing in bigger app, to bugs/changes to fix before going up to 1.0*
+
+##Dependencies and services
 in depjector there is 2 kinds of Dependencies, the first is a normal commonJS module, the second one is a service, this is also a normal module, but it get a parameter that tell depjector that it is a service.
 
 you can added settings for depjector in the form of a extra property to the module.exports object with the name __dependency.
@@ -51,14 +52,14 @@ this is also useful if you want to add a plugin to you app, just down in the fil
 
 ##API
 
-#create the object
+###create the object
 
 ```javascript
 const Depjector = require("depjector");
 const depjector = new Depjector();
 ```
 
-#index dependency
+###index dependency
 you can use indexPath, indexDependencies, indexDependency to add dependencies to the store, then use one of the get methods to get them back out.
 all the index methods is returning promises
 
@@ -84,7 +85,7 @@ depjector.indexDependency({name: "more", path:"./justIn.js"}).then(() => {
 });
 ```
 
-#get dependency
+###get dependency
 getDependency, executeService
 
 getDependency is creating a object of the type of the dependency and return it, if the dependency has it's own dependencies then they will be auto injected.
@@ -92,13 +93,13 @@ getDependency is creating a object of the type of the dependency and return it, 
 const more = depjector.getDependency("more");
 ```
 
-executeService runs service with the name, return the results from all the module created for this call.
+executeService runs service with the name in the first parameter and pass the rest in to the service, it return the results from all the module created for this call.
 ```javascript
-const results = depjector.executeService("routes:public");
+const results = depjector.executeService("routes:public", arg1, arg2);
 ```
 
 
 ##TODO
 
--better docs
--fix bug in the unittests, so i can get 100% coverage (it is now but the modules i am using got a bug)
+* better docs
+* fix bug in the unittests, so i can get 100% coverage (it is now but the modules i am using got a bug)

@@ -50,7 +50,7 @@ describe('Depjector', () => {
             const depjector = new Depjector();
             depjector.indexDependency("../inc/SomeMod5.js");
 
-            assert(depjector.getDependency("someMod5", {}), "it didn't get a dependency");
+            assert(depjector.getDependency("SomeMod5", {}), "it didn't get a dependency");
         });
 
         it('should load OtherMod', function () {
