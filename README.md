@@ -8,7 +8,7 @@ use npm for the installation, simple do
 npm install depjector --save
 ```
 
-*Is still testing in bigger app, to bugs/changes to fix before going up to 1.0*
+*i am still testing in a bigger app, to find bugs/changes to fix before going up to 1.0*
 
 ##Dependencies and services
 in depjector there is 2 kinds of Dependencies, the first is a normal commonJS module, the second one is a service, this is also a normal module, but it get a parameter that tell depjector that it is a service.
