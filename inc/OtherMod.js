@@ -1,11 +1,16 @@
 'use strict';
 class OtherMod {
-    constructor(someMod) {
+    constructor(someMod, depjector, accessToken) {
         console.log('Creating OtherMod');
         this.someMod = someMod;
+        this.depjector = depjector;
+        this.accessToken = accessToken;
     }
 
     callMe() {
+        this.depjector.udateDependency(this.accessToken, (someMod, depjector, accessToken) => {
+            console.log("upd", someMod, accessToken);
+        });
         this.someMod.callMe();
     }
 }

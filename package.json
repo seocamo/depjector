@@ -1,7 +1,7 @@
 {
   "name": "depjector",
-  "version": "0.3.1",
-  "description": "",
+  "version": "0.4.1",
+  "description": "this is a dependency injector for node 4.x <",
   "main": "index.js",
   "scripts": {
     "test": "mocha",
@@ -15,7 +15,9 @@
     "Dependency",
     "Injection"
   ],
-  "author": "Peter Bryrup",
+  "author": {
+    "name": "Peter Bryrup"
+  },
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/seocamo/depjector/issues"

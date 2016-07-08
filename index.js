@@ -109,6 +109,13 @@ class Depjector {
         this.dependencyStore.set(name, dependency);
     }
 
+    udateDependency(accessToken, cb) {
+        const dependency = this.dependencyStore.findOneByAccessToken(accessToken);
+        if (dependency) {
+            this._injectDependency(dependency, {}, cb);
+        }
+    }
+
     getDependency(name, overwrites) {
         // force string.
         name += "";
@@ -151,9 +158,10 @@ class Depjector {
      * _injectDependency
      * @param {Dependency} dependency
      * @param {Object} overwrites
+     * @param {Function} cb
      * @returns {Object}
      */
-    _injectDependency(dependency, overwrites) {
+    _injectDependency(dependency, overwrites, cb) {
         //const now = Date.now();
         // if the user don't want DI on a module jump over.
         if (dependency.finally) {
@@ -167,7 +175,9 @@ class Depjector {
         const params = [];
         if (dependency.args.length > 0) {
             for (const arg of dependency.args) {
-                if (overwrites[arg]) {
+                if (arg === "accessToken") {
+                    params.push(dependency.accessToken);
+                } else if (overwrites[arg]) {
                     params.push(overwrites[arg]);
                 } else {
                     params.push(this.getDependency(arg));
@@ -175,7 +185,9 @@ class Depjector {
             }
         }
 
-        if (dependency.isClass) {
+        if (cb) {
+            return cb.apply(undefined, params);
+        } else if (dependency.isClass) {
             // make new object of the Class with the parameters
             //console.log("i ", (Date.now() - now), "\n");
             return new (Function.prototype.bind.apply(dependency.dependency, [].concat([null], params)));
