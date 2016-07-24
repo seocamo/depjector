@@ -7,15 +7,15 @@ const depjector = new Depjector();
 
 const now = Date.now();
 
-depjector.addNodeModules(["babel-cli", "babel-preset-es2015", "babel-register"]).then((count) => {
+depjector.addNodeModules(["grunt-mocha-test", "babel-cli", "babel-preset-es2015", "babel-register"]).then((count) => {
     console.log("N ", (Date.now() - now), " ");
     console.log(count);
 });
 
 const now1 = Date.now();
 
-depjector.addModules([
-    "grunt-mocha-test",
+depjector.addModuleList([
+    //"grunt-mocha-test",
     "isparta",
     "istanbul",
     "mocha"
@@ -25,7 +25,7 @@ depjector.addModules([
 });
 
 
-depjector.indexPath("./inc").then((count) => {
+depjector.addByPath("./inc").then((count) => {
     const ts0 = Date.now();
     console.log(count);
 

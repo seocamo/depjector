@@ -8,7 +8,7 @@ class OtherMod {
     }
 
     callMe() {
-        this.depjector.udateDependency(this.accessToken, (someMod, depjector, accessToken) => {
+        this.depjector.updateDependency(this.accessToken, (someMod, depjector, accessToken) => {
             console.log("upd", someMod, accessToken);
         });
         this.someMod.callMe();

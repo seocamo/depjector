@@ -12,7 +12,7 @@ describe('Depjector', () => {
 
         it("should load all " + dependencyCount + " dependencies", () => {
             const depjector = new Depjector();
-            depjector.indexPath("../inc").then((count) => {
+            depjector.addByPath("../inc").then((count) => {
                 assert(count === dependencyCount, "it didn't load all dependencies");
             }).catch((err) => {
                 throw err;
@@ -22,7 +22,7 @@ describe('Depjector', () => {
 
         it("should add 2 dependencies extra", () => {
             const depjector = new Depjector();
-            depjector.indexDependencies([
+            depjector.addDependencies([
                 {name: "test1", path: "./inc/OtherMod.js"},
                 {name: "test2", path: "./inc/OtherMod1.js"}
             ]).then(() => {
@@ -33,7 +33,7 @@ describe('Depjector', () => {
         it("should throw a error if get any thing else then a array", () => {
             const depjector = new Depjector();
             try {
-                depjector.indexDependencies("");
+                depjector.addDependencies("");
             } catch (e) {
                 assert(e, "it didn't catch a error");
             }
@@ -41,14 +41,14 @@ describe('Depjector', () => {
 
         it("should add a dependency", () => {
             const depjector = new Depjector();
-            depjector.indexDependency({name: "test1", path: "./inc/SomeMod5.js"}).then(() => {
+            depjector.addDependency({name: "test1", path: "./inc/SomeMod5.js"}).then(() => {
                 assert(depjector.dependencyStore.dependencies.length === 1, "it didn't load a dependency");
             });
         });
 
         it("should get a dependency", () => {
             const depjector = new Depjector();
-            depjector.indexDependency("../inc/SomeMod5.js");
+            depjector.addDependency("../inc/SomeMod5.js");
 
             assert(depjector.getDependency("SomeMod5", {}), "it didn't get a dependency");
         });
@@ -56,7 +56,7 @@ describe('Depjector', () => {
         it('should load OtherMod', function () {
             const ts = Date.now();
             const depjector = new Depjector();
-            depjector.indexPath('../inc').then((count) => {
+            depjector.addByPath('../inc').then((count) => {
                 const ts0 = Date.now();
                 console.log(count);
 

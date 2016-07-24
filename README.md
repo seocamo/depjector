@@ -42,8 +42,8 @@ module.exports.__dependency = {
     service: ["service:one", "service:two", "routes:public"],
     // overwrite the dependencies if you want to name the parameters some thing else.
     args: ["overwriteDependency1", "dep2"],
-    // if a module is finally it will be use raw as the dependency, good for config or other objects like db connection.
-    finally: false
+    // if a module is autowired it will be use raw as the dependency, good for config or other objects like db connection.
+    autowired: true
 };
 ```
 
@@ -60,7 +60,7 @@ const depjector = new Depjector();
 ```
 
 ###index dependency
-you can use indexPath, indexDependencies, indexDependency to add dependencies to the store, then use one of the get methods to get them back out.
+you can use addByPath, addDependencies, addDependency to add dependencies to the store, then use one of the get methods to get them back out.
 all the index methods is returning promises
 
 indexPath is use for index all in a folder, it take a path(string) as parameter
@@ -71,7 +71,7 @@ depjector.indexPath("./lib").then((countOfLoadedDependencies) => {
 
 indexDependencies take a array of dependencies, and loop them and call indexDependency with each.
 ```javascript
-depjector.indexDependencies([
+depjector.addDependencies([
     {path: "./lib/some.js"},
     {name: "more", path:"./justIn.js"},
     {path: "./services/routes.js", service: ["routes:public"]}
@@ -79,9 +79,9 @@ depjector.indexDependencies([
 });
 ```
 
-indexDependency is use for adding a dependency to the dependency store
+addDependency is use for adding a dependency to the dependency store
 ```javascript
-depjector.indexDependency({name: "more", path:"./justIn.js"}).then(() => {
+depjector.addDependency({name: "more", path:"./justIn.js"}).then(() => {
 });
 ```
 

@@ -1,6 +1,6 @@
 'use strict';
 class SomeMod5 {
-    constructor() {
+    constructor(someMod3) {
         console.log('Creating SomeMode5');
     }
 
@@ -15,5 +15,5 @@ module.exports.__dependency = {
     name: 'SomeMod5',
     service: [],
     args: [],
-    finally: true
+    autowired: false
 };
