@@ -28,20 +28,16 @@ class Depjector {
         return new Promise((resolve, reject) => {
             const before = this.dependencyStore.dependencies.length;
             utils.getAllFiles(dependencyPath).then((files) => {
-                files.every((file) => {
+                for (const file of files) {
                     const ext = path.extname(file);
                     if (ext === ".js") {
-                        this.addDependency(file).then(() => {
-                        }).catch((e) => {
-                            reject(e);
-                        });
+                        this.dependencyStore.add(file);
                     }
-                    return true;
-                });
+                }
                 //console.log("p ", (Date.now() - now), "\n");
                 return resolve(this.dependencyStore.dependencies.length - before);
             }).catch((err) => {
-                reject(err);
+                return reject(err);
             });
         });
     }

@@ -1,6 +1,6 @@
 {
   "name": "depjector",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "this is a dependency injector for node 4.x <",
   "main": "index.js",
   "scripts": {
